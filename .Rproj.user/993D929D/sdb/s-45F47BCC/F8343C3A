@@ -1,0 +1,17 @@
+{
+    "contents" : "## Main Process\nrm(list=ls())\n\n# Load libraries\nlibrary(twitteR)\nlibrary(RCurl)\n\n# Load scripts\nfiles <- list.files(path='Scripts/')\n\n# Read scripts\nfor(i in files) source(file.path('Scripts/',i))\n\n# Get SinceID to NULL\nsinceID <- NULL\n\n# # Load credentials\nload('auth.rdata')\n\n# Set sink to log file\nsink(file = 'log.txt', append = TRUE, split = TRUE)\n\na <- TRUE\nwhile(a){\n\n  # Setup oauth silently\n  options(httr_oauth_cache = TRUE)\n  try({setup_twitter_oauth(auth[1], auth[2], auth[3], auth[4])},\n      silent = TRUE)\n  \n  # Read tweets\n  tweets <- getTweets(query='expresso', sinceID = sinceID)\n  sinceID <- attr(tweets, 'max_sinceID')\n\n  # Remove ones in namesPast\n  load('Data/namesPast.rdata')\n  tweets <- tweets[!tweets$screenName %in% namesPast,]\n  \n  if(!is.null(tweets)){\n    if(nrow(tweets) > 0){\n      \n      #get the top user\n      topU <- topUser(users=tweets$screenName)\n      tweets <- tweets[tweets$screenName == topU,]\n      \n      # Add name to the list\n      namesPast <- c(namesPast, topU)\n      save(namesPast, file = 'Data/namesPast.rdata')\n      \n      # Create reply text\n      replyText <- paste(paste('@', tweets$screenName[1], sep=''), randText())\n      \n      # Send a reply\n      x <- try(updateStatus(text = replyText, inReplyTo = tweets$id[1]), silent = TRUE)\n      \n      # Print progress to screen\n      cat('\\n', as.character(Sys.time()), '\\n')\n      cat('Recieved:', tweets$text[1], '\\n')\n      if(class(x) == 'try-error'){\n        cat('Sent:', as.character(x), '\\n')\n      } else {\n        cat('Sent:', replyText, '\\n')\n      }\n      \n    } else {\n      cat('\\n', as.character(Sys.time()), '\\n')\n    }\n  } else {\n    cat('\\n', as.character(Sys.time()), '\\n')\n  }\n  Sys.sleep(time=3600)\n}",
+    "created" : 1489529032093.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3219038106",
+    "id" : "F8343C3A",
+    "lastKnownWriteTime" : 1489528363,
+    "path" : "~/no2expresso/main_process.r",
+    "project_path" : "main_process.r",
+    "properties" : {
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "type" : "r_source"
+}
